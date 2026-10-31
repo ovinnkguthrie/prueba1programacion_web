@@ -1,1 +1,20 @@
-[]
+[
+    {
+        "id": 1793418143,
+        "nombre": "juanin perez",
+        "dni": "20.997.589-0",
+        "comprobante": ""
+    },
+    {
+        "id": 1793418743,
+        "nombre": "lola lolas ",
+        "dni": "1.111.111.1",
+        "comprobante": ""
+    },
+    {
+        "id": 1793419610,
+        "nombre": "juanin perez",
+        "dni": "1.111.111.1",
+        "comprobante": ""
+    }
+]

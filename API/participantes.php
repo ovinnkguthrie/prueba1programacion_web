@@ -1,44 +1,56 @@
 <?php
 header("Content-Type: application/json; charset=UTF-8");
-$archivo = '../participantes.json';
+require_once 'verificar_sesion.php';
 
-$method = $_SERVER['REQUEST_METHOD'];
+$archivoJson = 'participantes.json';
 
-if ($method === 'GET') {
-    if (file_exists($archivo)) {
-        $contenido = file_get_contents($archivo);
-        echo $contenido ?: '[]';
-    } else {
-        echo '[]';
-    }
-} elseif ($method === 'POST') {
+// Cargar datos actuales
+$participantes = file_exists($archivoJson) 
+    ? json_decode(file_get_contents($archivoJson), true) ?? [] 
+    : [];
+
+$metodo = $_SERVER['REQUEST_METHOD'];
+
+if ($metodo === 'GET') {
+    // 2. Listar participantes
+    echo json_encode($participantes);
+    exit;
+
+} elseif ($metodo === 'POST') {
+    // 4. Registrar participante
     $input = json_decode(file_get_contents('php://input'), true);
+    $nombre = trim($input['nombre'] ?? $_POST['nombre'] ?? '');
+    $apellido = trim($input['apellido'] ?? $_POST['apellido'] ?? '');
+    $numeroRifa = $input['numero_rifa'] ?? $_POST['numero_rifa'] ?? null;
 
-    if (!$input || empty($input['nombre']) || empty($input['dni'])) {
+    if (empty($nombre) || empty($apellido) || $numeroRifa === null) {
         http_response_code(400);
-        echo json_encode(["error" => "Campos obligatorios: nombre y dni"]);
+        echo json_encode(["status" => "error", "message" => "Campos obligatorios: nombre, apellido, numero_rifa"]);
         exit;
     }
 
-    $datos = file_exists($archivo) ? json_decode(file_get_contents($archivo), true) : [];
-    if (!is_array($datos)) {
-        $datos = [];
-    }
+    // Generar ID autoincremental
+    $nuevoId = empty($participantes) ? 1 : max(array_column($participantes, 'id')) + 1;
 
     $nuevoParticipante = [
-        "id" => time(),
-        "nombre" => $input['nombre'],
-        "dni" => $input['dni'],
-        "comprobante" => $input['comprobante'] ?? ''
+        "id" => $nuevoId,
+        "nombre" => $nombre,
+        "apellido" => $apellido,
+        "numero_rifa" => (int)$numeroRifa
     ];
 
-    $datos[] = $nuevoParticipante;
-    file_put_contents($archivo, json_encode($datos, JSON_PRETTY_PRINT));
+    $participantes[] = $nuevoParticipante;
+    file_put_contents($archivoJson, json_encode($participantes, JSON_PRETTY_PRINT));
 
     http_response_code(201);
-    echo json_encode(["mensaje" => "Participante registrado", "data" => $nuevoParticipante]);
+    echo json_encode([
+        "status" => "success",
+        "message" => "Participante registrado correctamente",
+        "data" => $nuevoParticipante
+    ]);
+    exit;
 } else {
     http_response_code(405);
-    echo json_encode(["error" => "Método no permitido"]);
+    echo json_encode(["status" => "error", "message" => "Método no permitido."]);
 }
 ?>
